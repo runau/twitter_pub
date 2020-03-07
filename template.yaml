@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: api gw, lambda, layers and sqs
+Parameters:
+  Oauth1:
+    Type: String
+  Oauth2:
+    Type: String
+  Oauth3:
+    Type: String
+  Oauth4:
+    Type: String
+  ScreenName:
+    Type: String
+  TwitterBuket:
+    Type: String
+
+Resources:
+  twitterAutoReply:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: 'twitter-auto-reply'
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      CodeUri: src/twitterAutoReply
+      Description: 'twitter-auto-reply'
+      Environment:
+        Variables:
+          OAUTH1: !Sub ${Oauth1}
+          OAUTH2: !Sub ${Oauth2}
+          OAUTH3: !Sub ${Oauth3}
+          OAUTH4: !Sub ${Oauth4}
+          SCREEN_NAME: !Sub ${ScreenName}
+      MemorySize: 1024
+      Timeout: 60
+      Role: !Sub 'arn:aws:iam::${AWS::AccountId}:role/service-role/slackBotRole'
+      Tags:
+        Env: dev
+        project: twitterBot
+      Layers:
+        - !Ref TwitterModulesLayer 
+  TwitterModulesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: TwitterModulesLayer
+      ContentUri: ./src/layer/common
+      CompatibleRuntimes:
+        - python3.7
+        - python3.6
+      
