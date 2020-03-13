@@ -64,7 +64,7 @@ def main():
 
     # botのツイートを取得
     doneList = requests.get(
-        f'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name={SCREEN_NAME}&count=50',
+        f'https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name={SCREEN_NAME}&count=10',
         auth=getOauth()
     ).json()
     if "errors" in doneList:
@@ -78,7 +78,7 @@ def main():
     # 指定タグのツイートを取得
     search = '%23抽選bot'
     response = requests.get(
-        f'https://api.twitter.com/1.1/search/tweets.json?q={search}&count=100&lang=ja&result_type=mixed&tweet_mode=extended',
+        f'https://api.twitter.com/1.1/search/tweets.json?q={search}&count=10&lang=ja&result_type=mixed&tweet_mode=extended',
         auth=getOauth()
     ).json()
 
@@ -184,6 +184,8 @@ def main():
         sleepTime = random.random() * 20
         time.sleep(sleepTime)
 
+        print("★reply★")
+
         # 指定タグのツイート者宛のリプライを取得
         search = f"%40{status['user_screen_name']}"
         repResponse = requests.get(
@@ -197,7 +199,6 @@ def main():
 
         repStatusList = repResponse["statuses"]
 
-        print("★reply★")
         for rep_status in repStatusList:
             if "retweeted_status" in status:
                 print("RT skip")
@@ -247,52 +248,65 @@ def main():
                 doneList += [in_reply_to_status_id]
             print(f"exec")
 
-        # print("★quoted★")
-        # for rep_status in quotedList:
+        print("★quoted★")
+        
+        search = '1237885014961836033'
+        response = requests.get(
+            f'https://api.twitter.com/1.1/search/tweets.json?q={search}&count=10&lang=ja&result_type=mixed&tweet_mode=extended',
+            auth=getOauth()
+        ).json()
+        for rep_status in response["statuses"]:
             
-        #     if rep_status['quoted_status_id_str'] != tweet_id:
-        #         continue
+            if "retweeted_status" in rep_status:
+                print("RT skip")
+                continue
 
-        #     if rep_status['id_str'] in doneList or rep_status['user']['screen_name'] == SCREEN_NAME:
-        #         print(f"{rep_status['user']['name']} reply done")
-        #         continue
-
-        #     print(f"text:{rep_status['full_text']}")
-        #     print(f"tweet_id:{rep_status['id_str']}")
-        #     print(f"user_id:{rep_status['user']['id_str']}")
-        #     print(f"user_screen_name:{rep_status['user']['screen_name']}")
-        #     print(f"user_name:{rep_status['user']['name']}")
-
-        #     # 抽選する
-        #     sump = 0
-        #     yourp = random.random() * 100
-        #     print(f"抽選値：{yourp}")
-        #     lot = None
-        #     for p in status["lot_pro"]:
-        #         sump += int(p["pro"])
-        #         if yourp <= sump:
-        #             lot = p["name"]
-        #             break
-
-        #     # リプライメッセージ作成
-        #     if lot is not None:
-        #         message = f'{rep_status["user"]["name"]}さん、引用リツイートありがとうございます！\n「{lot}」が当選しました。\n\n※このツイートはbotからの自動送信です #抽選bot'
-        #     else:
-        #         message = f'{rep_status["user"]["name"]}さん、引用リツイートありがとうございます！\n残念ながら、今回は落選してしまいました…\n\n※このツイートはbotからの自動送信です #抽選bot'
-
-        #     # リプライする
-        #     print(f"★★★{message}を送信★★★")
-        #     if not DEBUG_MODE:
-        #         in_reply_to_status_id = rep_status['id_str']
-        #         replyResponse = requests.post(
-        #             f'https://api.twitter.com/1.1/statuses/update.json',
-        #             data={"status": message, "in_reply_to_status_id": in_reply_to_status_id,
-        #                   "auto_populate_reply_metadata": True},
-        #             auth=getOauth()
-        #         ).json()
-        #         print(replyResponse)
-        #         doneList += [in_reply_to_status_id]
-        #     print(f"exec")
+            if rep_status['quoted_status_id_str'] != tweet_id:
+                continue
+            
+            if rep_status['user']['id_str'] == status["user_id"]:
+                continue
+    
+            if rep_status['id_str'] in doneList or rep_status['user']['screen_name'] == SCREEN_NAME:
+                print(f"{rep_status['user']['name']} reply done")
+                continue
+    
+            print(f"text:{rep_status['full_text']}")
+            print(f"tweet_id:{rep_status['id_str']}")
+            print(f"user_id:{rep_status['user']['id_str']}")
+            print(f"user_screen_name:{rep_status['user']['screen_name']}")
+            print(f"user_name:{rep_status['user']['name']}")
+    
+            # 抽選する
+            sump = 0
+            yourp = random.random() * 100
+            print(f"抽選値：{yourp}")
+            lot = None
+            for p in status["lot_pro"]:
+                sump += int(p["pro"])
+                if yourp <= sump:
+                    lot = p["name"]
+                    break
+    
+            # リプライメッセージ作成
+            if lot is not None:
+                message = f'{rep_status["user"]["name"]}さん、引用リツイートありがとうございます！\n「{lot}」が当選しました。\n\n※このツイートはbotからの自動送信です #抽選bot'
+            else:
+                message = f'{rep_status["user"]["name"]}さん、引用リツイートありがとうございます！\n残念ながら、今回は落選してしまいました…\n\n※このツイートはbotからの自動送信です #抽選bot'
+    
+            # リプライする
+            print(f"★★★{message}を送信★★★")
+            if not DEBUG_MODE:
+                in_reply_to_status_id = rep_status['id_str']
+                replyResponse = requests.post(
+                    f'https://api.twitter.com/1.1/statuses/update.json',
+                    data={"status": message, "in_reply_to_status_id": in_reply_to_status_id,
+                          "auto_populate_reply_metadata": True},
+                    auth=getOauth()
+                ).json()
+                print(replyResponse)
+                doneList += [in_reply_to_status_id]
+            print(f"exec")
 
         print("★retweeted★")
         for rep_status in retweetedList:
