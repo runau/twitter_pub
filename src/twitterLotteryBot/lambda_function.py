@@ -94,7 +94,6 @@ def main():
     tweetList = getParam("tweetList")
 
     retweetedList = list(filter(lambda x:"retweeted_status" in x,statusList))
-    quotedList = list(filter(lambda x:"quoted_status_id_str" in x,statusList))
 
     # if DEBUG_MODE:
     #     print(f"retweetedList:{retweetedList}")
@@ -249,8 +248,7 @@ def main():
             print(f"exec")
 
         print("★quoted★")
-        
-        search = '1237885014961836033'
+        search = tweet_id
         response = requests.get(
             f'https://api.twitter.com/1.1/search/tweets.json?q={search}&count=10&lang=ja&result_type=mixed&tweet_mode=extended',
             auth=getOauth()
